@@ -12,10 +12,22 @@ import scala.concurrent.Await
   */
 object Main extends App {
 
-  // Construct an actor to handle SessionEvent messages
+  /** =Raw Actor=
+    * Construct a raw actor to handle SessionEvent messages
+    *
+    * Construct an actor behavior that can react to both incoming messages and lifecycle signals.
+    * After spawning this actor from another actor (or as the guardian of an akka.typed.ActorSystem)
+    * it will be executed within an ActorContext that allows access to the system, spawning and
+    * watching other actors, etc. This constructor is called immutable because the behavior instance
+    * doesn't have or close over any mutable state. Processing the next message results in a new
+    * behavior that can potentially be different from this one. State is updated by returning a
+    * new behavior that holds the new immutable state.
+    */
   val gabbler =
     Actor.immutable[SessionEvent] { (actorContext, sessionEvent) ⇒
       sessionEvent match {
+        case SessionDenied(reason)  ⇒
+          Actor.stopped
         case SessionGranted(handle) ⇒
           handle ! PostMessage("Hello World!")
           Actor.same
@@ -36,9 +48,11 @@ object Main extends App {
     // Construct our top level actor
 
     // Spawn the chatRoom actor to handle Command messages
+    // Create a child Actor from ChatRoom.behavior with the name "chatroom".
     val chatRoom = actorContext.spawn(ChatRoom.behavior, "chatroom")
 
     // Spawn the gabbler actoer to handle Session messages
+    // Create a child Actor from gabbler with the name "gabbler".
     val gabblerRef = actorContext.spawn(gabbler, "gabbler")
 
     // Keep an eye on the gabbler in case it stops
@@ -60,10 +74,16 @@ object Main extends App {
   Await.result(system.whenTerminated, 3 seconds)
 }
 
+/** =Command Protocol=
+  *
+  */
 sealed trait Command
 final case class GetSession(screenName: String, replyTo: ActorRef[SessionEvent])
   extends Command
 
+/** =Session Protocol=
+  *
+  */
 sealed trait SessionEvent
 final case class SessionGranted(handle: ActorRef[PostMessage]) extends SessionEvent
 final case class SessionDenied(reason: String) extends SessionEvent
@@ -76,7 +96,12 @@ object ChatRoom {
   private final case class PostSessionMessage(screenName: String, message: String)
     extends Command
 
-  // A Behavior is akin to an Actor in that it is an Actor with defined message interactions.
+  /** =Command Behavior=
+    * Handles Command Messages
+    * <p>
+    * A Behavior is akin to an Actor in that it is an Actor with defined message interactions.
+    *
+    */
   val behavior: Behavior[Command] = chatRoom(List.empty)
 
   private def chatRoom(sessions: List[ActorRef[SessionEvent]]): Behavior[Command] =
@@ -94,5 +119,4 @@ object ChatRoom {
           Actor.same
       }
     }
-
 }
