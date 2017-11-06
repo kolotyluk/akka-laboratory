@@ -47,12 +47,12 @@ a Behavior.
 Both actors and their behaviors are typed, for example
 
     sealed trait Server
-    final case class Create(name: String,  replyTo: ActorRef[Client]) extends Command
-    final case class Destroy(name: String, replyTo: ActorRef[Client]) extends Command
+    final case class Create(name: String,  replyTo: ActorRef[Client]) extends Server
+    final case class Destroy(name: String, replyTo: ActorRef[Client]) extends Server
 
     sealed trait Client
-    final case class Created(name: String) extends Command
-    final case class Destroyed(name: String) extends Command
+    final case class Created(name: String) extends Client
+    final case class Destroyed(name: String) extends Client
 
     val serverActor = Actor.immutable[Server] {
       (actorContext, command) ⇒ command match {
