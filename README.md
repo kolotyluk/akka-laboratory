@@ -66,9 +66,16 @@ Both actors and their behaviors are typed, for example
     }
 
 Using this pattern we can see that by using sealed traits, the
-serverActor must implement all cases of Server commands, or the compiler
-will complain. The reduces the chances of unhandled messages and dead
-letters.
+serverActor and clientActor must implement all cases of Server commands,
+or the compiler will complain. This reduces the chances of unhandled
+messages and dead letters. We can also see, that it is harder to send
+the wrong message to an actor.
+
+Basically, Akka Typed better uses the compiler and strong typing to
+improve the clarity and safety of actor messaging. It is interesting to
+note that it took the Akka people several rounds of design, missteps,
+and redesign to get to this point, but it seems more than likely they
+have finally settled on a design that they are going to keep.
 
 #### Becomes
 
