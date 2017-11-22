@@ -1,8 +1,10 @@
 package net.kolotyluk.akka.laboratory
 
+import akka.actor.ActorLogging
 import akka.typed._
 import akka.typed.scaladsl.Actor
 import akka.typed.scaladsl.AskPattern._
+
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.concurrent.Await
