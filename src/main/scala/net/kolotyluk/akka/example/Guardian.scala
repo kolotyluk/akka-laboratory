@@ -15,20 +15,19 @@ object Guardian {
 
   sealed trait Message
   case class Done(cause: String) extends Message
+  case class Spawn(behavior: Behavior[_], name:String) extends Message
 
   /** =Outermost Behavior of ActorSystem=
     *
     * Defer creating the behavior instance so that we can pass its reference to
     * [[akka.typed.ActorSystem ActorSystem]]
-    * so it can spawn the top level actor.
+    * so it can spawn the top level actors.
     */
   val behavior: Behavior[Message] =
-    Actor.deferred { actorContext ⇒
+    Actor.deferred[Message] { actorContext ⇒
       logger.info(s"Guardian.behavior: initializing with actorContext.self = ${actorContext.self}")
 
-      val brat = actorContext.spawn(Brat.behavior, "brat")
-      actorContext.watch(brat)
-      brat ! Brat.Start(actorContext.self)
+      // do initialization stuff...
 
       monitor
     }
@@ -42,6 +41,10 @@ object Guardian {
       message match {
         case Done(cause) =>
           Actor.stopped
+        case Spawn(behavior, name) ⇒
+          val actorRef = actorCell.spawn(behavior, name)
+          actorCell.watch(actorRef)
+          Actor.same
       }
     } onSignal {
       // There is no other information available with this signal.
@@ -50,4 +53,6 @@ object Guardian {
         logger.warn(s"Received Terminated signal for $actorRef")
         Actor.stopped
     }
+
+
 }
