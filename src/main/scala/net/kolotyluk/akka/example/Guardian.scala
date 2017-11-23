@@ -13,9 +13,9 @@ object Guardian {
 
   val logger = Logger[this.type]
 
-  sealed trait Message
+  sealed trait Message extends Main.Message
   case class Done(cause: String) extends Message
-  case class Spawn(behavior: Behavior[_], name:String) extends Message
+  case class Spawn(behavior: Behavior[_], name:String, start: Main.Message) extends Message
 
   /** =Outermost Behavior of ActorSystem=
     *
@@ -37,22 +37,23 @@ object Guardian {
     */
   val monitor: Behavior[Message] =
     Actor.immutable[Message] { (actorCell, message) ⇒
-      logger.info("monitor received $message")
+      logger.info(s"Guardian.monitor: received $message")
       message match {
         case Done(cause) =>
           Actor.stopped
-        case Spawn(behavior, name) ⇒
+        case Spawn(behavior, name, startMessage) ⇒
+          logger.info(s"Guardian.monitor: spawning $name")
           val actorRef = actorCell.spawn(behavior, name)
           actorCell.watch(actorRef)
+          actorRef ! startMessage
           Actor.same
       }
     } onSignal {
       // There is no other information available with this signal.
       // While akka knows the reason for termination, we don't.
       case (actorCell, Terminated(actorRef)) ⇒
-        logger.warn(s"Received Terminated signal for $actorRef")
+        logger.warn(s"Guardian.monitor: Received Terminated signal for $actorRef")
         Actor.stopped
     }
-
 
 }
