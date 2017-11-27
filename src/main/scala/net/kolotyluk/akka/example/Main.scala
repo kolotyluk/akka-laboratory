@@ -10,6 +10,7 @@ import scala.util.Success
 object Main extends App with Configuration {
 
   trait Message extends Serializable
+  case class Start() extends Message
 
   val logger = Logger[this.type]
 

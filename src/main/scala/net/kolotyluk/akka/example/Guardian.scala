@@ -3,8 +3,8 @@ package net.kolotyluk.akka.example
 import akka.typed._
 import akka.typed.scaladsl.Actor
 import akka.typed.scaladsl.AskPattern._
-
 import grizzled.slf4j.Logger
+import net.kolotyluk.akka.example.Main.Start
 
 /** =Guardian Actors=
   * Top level of our actor hierarchy.
@@ -15,7 +15,7 @@ object Guardian {
 
   sealed trait Message extends Main.Message
   case class Done(cause: String) extends Message
-  case class Spawn(behavior: Behavior[_], name:String, start: Main.Message) extends Message
+  case class Spawn(behavior: Behavior[Main.Message], name:String) extends Message
 
   /** =Outermost Behavior of ActorSystem=
     *
@@ -41,11 +41,11 @@ object Guardian {
       message match {
         case Done(cause) =>
           Actor.stopped
-        case Spawn(behavior, name, startMessage) ⇒
+        case Spawn(behavior, name) ⇒
           logger.info(s"Guardian.monitor: spawning $name")
           val actorRef = actorCell.spawn(behavior, name)
           actorCell.watch(actorRef)
-          actorRef ! startMessage
+          actorRef ! Start()
           Actor.same
       }
     } onSignal {

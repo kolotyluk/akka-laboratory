@@ -10,9 +10,8 @@ import net.kolotyluk.akka.example.Guardian.Spawn
 
 object Brat extends Runnable {
 
-  sealed trait Message extends Main.Message
+  trait Message extends Main.Message
   final case class Count(count: Int) extends Message
-  final case class Start() extends Message
 
   val logger = Logger[this.type]
 
@@ -34,10 +33,10 @@ object Brat extends Runnable {
             Actor.same
           }
 
-        case message @ Start() ⇒
+        case Main.Start() ⇒
           //println(s"Brat starting with $actorCell")
 
-          logger.info(s"brat received $message")
+          //logger.info(s"brat received $message")
 
           val cancelable = actorCell.schedule(1 second, actorCell.self, Count(0))
           Actor.same
@@ -45,7 +44,7 @@ object Brat extends Runnable {
     }
 
   override def run = {
-    Main.system ! Spawn(brat, "brat", Start())
+    Main.system ! Spawn(brat.asInstanceOf[Behavior[Main.Message]], "brat")
 
     //    val random = math.random()
 //    logger.info(random)
